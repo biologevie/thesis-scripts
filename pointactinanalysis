@@ -1,0 +1,49 @@
+reccounts = [];
+summary = [];
+
+for i = 1:12
+    
+imgdir = sprintf('%%', i);
+ if isfile(imgdir) == 0
+     warn = sprintf('No image with this name. i = %d', i);
+   warning(warn);
+     continue
+ else
+image = double(imread(imgdir));
+
+TMdatapath = sprintf('%%', i );
+TMdata = xlsread(TMdatapath);
+coord = [TMdata(:,4), TMdata(:,5)];
+points = size(coord,1);
+points = [i, points];
+reccounts = [reccounts; points];
+
+actimgdir = sprintf('%%', i);
+actin = double(imread(actimgdir));
+thresh = 2; %distance beyond which point is considered 'off' not 'adjacent'. In pixels.
+[row, col] = find(actin==0);
+actcord = [col, row];
+
+loc = disttoactFunction(actcord, actin, coord, thresh);
+
+numOn = sum(loc(:) == 1);
+numOff = sum(loc(:) == 3);
+numAdj = sum(loc(:) == 2);
+
+summary = [summary; numOn, numOff, numAdj];
+ 
+outpath = '%%';
+baseFileName = sprintf('Loc outputs img %d.xls', i); 
+fullFileName = fullfile(outpath, baseFileName);
+xlswrite(fullFileName, loc);
+
+ end
+end
+
+outpathC = '%%';
+baseFileNameC = 'ReceptorCounts.xls';
+baseFileNameD = 'LocOutputsSummary.xls';
+fullFileNameC = fullfile(outpathC, baseFileNameC);
+fullFileNameD = fullfile(outpathC, baseFileNameD);
+xlswrite(fullFileNameC, reccounts);
+xlswrite(fullFileNameD, summary);
