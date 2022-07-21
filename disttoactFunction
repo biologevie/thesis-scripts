@@ -1,0 +1,71 @@
+function loc = disttoact(actcord, actin, coord, thresh)
+
+
+
+numact = size(actcord(:,1));
+numact = numact(1);
+numpoints = size(coord(:,1));
+numpoints = numpoints(1);
+loc = NaN(numpoints,1);
+
+
+
+
+
+for i = 1:numpoints
+    
+    w = coord(i, 1);
+    u = coord(i, 2);
+   
+    if w ==0
+        continue
+    elseif u == 0
+        continue 
+        
+    else 
+        
+    distances = NaN(numact, 2);
+    sumdist = NaN(numact,1);
+    
+    if actin(u, w) == 0
+        loc(i, 1) = 1; %1 = receptor is colocalised/sitting on actin
+        
+    else
+        
+        for d = 1:numact
+            p = actcord(d, 1);
+            k = actcord(d, 2);
+            minValuex = abs(w - p);
+            minValuey = abs(u - k);
+            distances(d,:) = [minValuex, minValuey];
+            
+        end
+        
+        
+        distSize = size(distances(:,1));
+        distSize = distSize(1);
+        
+        for j = 1:distSize
+            dd = distances(j, 1) + distances(j,2);
+            sumdist(j) = dd;
+        end
+        
+        minDif = min(sumdist);
+        minInd = find(sumdist==minDif);
+        
+        a = distances(minInd, 1);
+        b = distances(minInd, 2);
+        
+        dist2a = sqrt(a.^2 + b.^2);
+        %could also record the distances?
+        
+        if dist2a < thresh
+            loc(i, 1) = 2; %2 = receptor is adjacent to actin
+            
+        else
+            loc(i, 1) = 3; %3 = receptor is anticorrelated with actin
+        end
+    end
+end
+end
+end
