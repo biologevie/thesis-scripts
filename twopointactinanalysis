@@ -1,0 +1,107 @@
+%%Read in data
+
+clear; 
+
+myFolder = 'H:/121121 A2b alpha act rep 1/Cropped for analysis/';
+        
+mydataFolder = 'H:/121121 A2b alpha act rep 1/Cropped for analysis/Results';
+
+
+filePatternSC = fullfile(myFolder, '*Snap*.csv'); 
+snapcoordFiles = dir(filePatternSC);
+
+filePatternAC = fullfile(myFolder, '*alpha*.csv'); 
+alphacoordFiles = dir(filePatternAC);
+
+filePatternL = fullfile(mydataFolder, '*img*.xls'); 
+locFiles = dir(filePatternL);
+
+summary = [];
+summary2 = [];
+
+lim = size(locFiles);
+
+for i = 1:lim
+    
+    
+     baseFileNameCoordA = alphacoordFiles(i).name;
+    ffnCoordA = fullfile(alphacoordFiles(i).folder, baseFileNameCoordA);
+    coordA = xlsread(ffnCoordA);
+    
+    baseFileNameCoordS = snapcoordFiles(i).name;
+    ffnCoordS = fullfile(snapcoordFiles(i).folder, baseFileNameCoordS);
+    coordS = xlsread(ffnCoordS);
+
+loc = [];
+loc2 = [];
+
+% extract relevant columns
+X = [coordA(:,4), coordA(:,5)];
+Y = [coordS(:,4), coordS(:,5)];
+
+%find distances between points in the two coord sets
+D = pdist2(X,Y);
+%find distances below and above threshold
+[row,col] = find(D<=5);
+[row1,col1] = find(D>5);
+Dist = [row,col];
+Dist2 = [row1,col1];
+
+
+%%Read in existing alpha act locs
+baseFileNameLoc = locFiles(i).name;
+    ffnLoc = fullfile(locFiles(i).folder, baseFileNameLoc);
+    aaloc = xlsread(ffnLoc);
+    
+% Sort 1st column of distances to associate with related point and point
+% behaviour stored in locdata - remove duplicate calls and sort ascending
+sortDist= sort(Dist(:,1));
+assocDis = unique(sortDist);
+sortDist2= sort(Dist2(:,1));
+unassocDis = unique(sortDist2);
+unassocDis = unassocDis(~ismember(unassocDis,assocDis));
+
+%loop to list receptor behaviour for alpha act close to receptors
+for m = 1:size(assocDis)
+ 
+k = assocDis(m,1); 
+
+cat = aaloc(k,1);
+loc =[loc; cat];
+end
+
+%loop to list receptor behaviour for alpha act not close to receptors
+for f = 1:size(unassocDis)
+ 
+k2 = unassocDis(f,1);
+
+cat2 = aaloc(k2,1);
+loc2 =[loc2; cat2];
+end
+
+
+%format summary data for output
+numOn = sum(loc(:) == 1);
+numOff = sum(loc(:) == 3);
+numAdj = sum(loc(:) == 2);
+
+summary = [summary; numOn, numOff, numAdj];
+
+numOn2 = sum(loc2(:) == 1);
+numOff2 = sum(loc2(:) == 3);
+numAdj2 = sum(loc2(:) == 2);
+
+summary2 = [summary2; numOn2, numOff2, numAdj2];
+end
+
+
+
+
+
+outpathC = mydataFolder;
+baseFileNameC = 'withReceptor LocOutputsSummary.xls';
+baseFileNameD = 'withoutReceptor LocOutputsSumamry.xls';
+fullFileNameC = fullfile(outpathC, baseFileNameC);
+fullFileNameD = fullfile(outpathC, baseFileNameD);
+xlswrite(fullFileNameC, summary);
+xlswrite(fullFileNameD, summary2);
